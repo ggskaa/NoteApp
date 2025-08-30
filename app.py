@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QSizePolicy, QTextEdit
 )
 from PyQt6.QtCore import Qt, QPoint
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QFont
 
 from utils import create_note, delete_note, all_notes, change_note_content
 
@@ -14,47 +14,100 @@ class CustomTitleBar(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.setFixedHeight(40)
+        self.setFixedHeight(50)
+        self.dragPos = QPoint()
 
         self.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                        stop:0 #1e1e2f, stop:1 #16213e);
-            color: white;
+            CustomTitleBar {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #1e1e2f, stop:1 #16213e);
+                border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+            }
         """)
 
         layout = QHBoxLayout()
-        layout.setContentsMargins(10, 0, 10, 0)
+        layout.setContentsMargins(15, 0, 15, 0)
         layout.setSpacing(10)
 
-        self.title = QLabel("📝 Notes App")
-        self.title.setStyleSheet("font-size: 14px; font-weight: bold;")
+        layout.addStretch()
+
+        # Центральный логотип
+        self.title = QLabel("                                  Notes App")
+        title_font = QFont("Segoe UI", 18, QFont.Weight.Bold)
+        self.title.setFont(title_font)
+        self.title.setStyleSheet("""
+            QLabel {
+                color: #f1f5f9;
+                font-size: 18px;
+                font-weight: bold;
+                padding: 10px;
+                text-align: center;
+            }
+        """)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.title)
+
         layout.addStretch()
 
         btn_min = QPushButton("─")
         btn_min.clicked.connect(self.parent.showMinimized)
-        btn_max = QPushButton("⬜")
+        btn_max = QPushButton("☐")
         btn_max.clicked.connect(self.toggle_max_restore)
         btn_close = QPushButton("✕")
         btn_close.clicked.connect(self.parent.close)
 
-        for btn in (btn_min, btn_max, btn_close):
-            btn.setFixedSize(30, 30)
-            btn.setStyleSheet("""
-                QPushButton {
-                    border: none;
-                    color: #e2e8f0;
-                    font-size: 14px;
-                }
-                QPushButton:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 6px;
-                }
-                QPushButton:pressed {
-                    background: rgba(255, 255, 255, 0.2);
-                }
-            """)
-            layout.addWidget(btn)
+        # Стили для кнопок управления
+        button_style = """
+            QPushButton {
+                border: none;
+                color: #e2e8f0;
+                font-size: 16px;
+                font-weight: bold;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                min-width: 35px;
+                min-height: 35px;
+                max-width: 35px;
+                max-height: 35px;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.15);
+                color: #ffffff;
+            }
+            QPushButton:pressed {
+                background: rgba(255, 255, 255, 0.25);
+            }
+        """
+
+        close_button_style = """
+            QPushButton {
+                border: none;
+                color: #e2e8f0;
+                font-size: 16px;
+                font-weight: bold;
+                background: rgba(239, 68, 68, 0.2);
+                border-radius: 8px;
+                min-width: 35px;
+                min-height: 35px;
+                max-width: 35px;
+                max-height: 35px;
+            }
+            QPushButton:hover {
+                background: rgba(239, 68, 68, 0.4);
+                color: #ffffff;
+            }
+            QPushButton:pressed {
+                background: rgba(239, 68, 68, 0.6);
+            }
+        """
+
+        btn_min.setStyleSheet(button_style)
+        btn_max.setStyleSheet(button_style)
+        btn_close.setStyleSheet(close_button_style)
+
+        layout.addWidget(btn_min)
+        layout.addWidget(btn_max)
+        layout.addWidget(btn_close)
 
         self.setLayout(layout)
 
@@ -79,27 +132,118 @@ class AddNote(QDialog):
     def __init__(self):
         super().__init__()
 
-        layout = QFormLayout()
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setFixedSize(500, 350)
 
-        self.setWindowTitle("Create Note")
-        self.setFixedSize(400, 250)
+        # Стили для диалога создания заметки
+        self.setStyleSheet("""
+            QDialog {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                           stop:0 #1a1a2e, stop:1 #16213e);
+                border: 2px solid rgba(99, 102, 241, 0.3);
+                border-radius: 20px;
+            }
+            
+            QLabel {
+                color: #f1f5f9;
+                font-size: 16px;
+                font-weight: 600;
+                font-family: "Segoe UI", "Roboto", "Inter";
+                margin-bottom: 8px;
+            }
+
+            QLineEdit {
+                background: rgba(255, 255, 255, 0.08);
+                border: 2px solid rgba(255, 255, 255, 0.15);
+                border-radius: 12px;
+                padding: 15px;
+                color: #f8fafc;
+                font-size: 14px;
+                font-family: "Segoe UI", "Roboto", "Inter";
+                min-height: 20px;
+            }
+
+            QLineEdit:focus {
+                border: 2px solid #6366f1;
+                background: rgba(255, 255, 255, 0.12);
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            }
+
+            QPushButton {
+                font-size: 15px;
+                font-weight: 600;
+                font-family: "Segoe UI", "Roboto", "Inter";
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                           stop:0 #3b82f6, stop:1 #2563eb);
+                border: none;
+                border-radius: 12px;
+                color: white;
+                padding: 12px 24px;
+                min-height: 45px;
+                margin: 5px;
+            }
+
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                           stop:0 #2563eb, stop:1 #1d4ed8);
+                transform: translateY(-1px);
+            }
+
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                           stop:0 #1d4ed8, stop:1 #1e40af);
+            }
+            
+            QPushButton#cancelBtn {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                           stop:0 #64748b, stop:1 #475569);
+            }
+            
+            QPushButton#cancelBtn:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                           stop:0 #475569, stop:1 #334155);
+            }
+        """)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+
+        title_label = QLabel(" Create New Note")
+        title_font = QFont("Segoe UI", 20, QFont.Weight.Bold)
+        title_label.setFont(title_font)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setStyleSheet("color: #f1f5f9; margin-bottom: 20px;")
+        layout.addWidget(title_label)
+
+        # Форма
+        form_layout = QFormLayout()
+        form_layout.setSpacing(15)
 
         self.title_input = QLineEdit()
+        self.title_input.setPlaceholderText("Enter note title...")
         self.content_input = QLineEdit()
+        self.content_input.setPlaceholderText("Enter note content...")
 
-        layout.addRow(QLabel("Title:"), self.title_input)
-        layout.addRow(QLabel("Content:"), self.content_input)
+        form_layout.addRow(QLabel("Title:"), self.title_input)
+        form_layout.addRow(QLabel("Content:"), self.content_input)
 
-        buttons = QDialogButtonBox()
-        btn_ok = QPushButton("Save")
+        layout.addLayout(form_layout)
+
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(15)
+
         btn_cancel = QPushButton("Cancel")
-        buttons.addButton(btn_ok, QDialogButtonBox.ButtonRole.AcceptRole)
-        buttons.addButton(btn_cancel, QDialogButtonBox.ButtonRole.RejectRole)
+        btn_cancel.setObjectName("cancelBtn")
+        btn_ok = QPushButton("Save")
 
         btn_ok.clicked.connect(self.accept)
         btn_cancel.clicked.connect(self.reject)
 
-        layout.addRow(buttons)
+        button_layout.addWidget(btn_cancel)
+        button_layout.addWidget(btn_ok)
+
+        layout.addLayout(button_layout)
         self.setLayout(layout)
 
     def get_data(self):
@@ -112,13 +256,10 @@ class DisplayNote(QDialog):
 
         layout = QVBoxLayout()
 
-
         self.note = note
         self.main_window = parent
-        # CustomTitleBar(self)
-        # self.setWindowTitle(f"{note.title}, -> ID:{note.id}")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setFixedSize(800, 400) # => пока-что коректно только в фул-сайз моде
+        self.setFixedSize(800, 400)
 
         self.content_edit = QTextEdit(note.content)
 
@@ -154,7 +295,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # убираем стандартный title bar
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.resize(1600, 900)
 
@@ -216,11 +356,9 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # === ВСТАВЛЯЕМ КАСТОМНЫЙ TITLE BAR ===
         self.title_bar = CustomTitleBar(self)
         layout.addWidget(self.title_bar)
 
-        # === Всё остальное как у тебя ===
         main_layout = QHBoxLayout()
         self.left_layout = QVBoxLayout()
         self.left_layout.setSpacing(10)
@@ -272,7 +410,7 @@ class MainWindow(QMainWindow):
         self.clear_layout(self.right_layout)
         notes = all_notes()
         for note in notes:
-            btn = QPushButton(f"📝 {note.id} - {note.title}")
+            btn = QPushButton(f" {note.id} - {note.title}")
             btn.clicked.connect(lambda checked=False, n=note: self.open_note_window(n))
             btn.setFixedHeight(40)
             btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
